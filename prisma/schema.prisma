@@ -1,0 +1,81 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "postgresql"
+  url      = env("DATABASE_URL")
+}
+
+model User {
+  id                Int          @id @default(autoincrement())
+  fullName          String       @map("full_name")
+  email             String       @unique
+  createdAt         DateTime?    @default(now()) @map("created_at")
+  updatedAt         DateTime?    @updatedAt @map("updated_at")
+  profilePictureURL String       @map("profile_picture_url")
+  password          String
+  posts             Post[]
+  roles             UserToRole[]
+
+  @@map("users")
+}
+
+model Post {
+  id                Int        @id @default(autoincrement())
+  userId            Int        @map("user_id")
+  title             String
+  content           String
+  publishedAt       DateTime   @default(now()) @map("published_at")
+  updatedAt         DateTime   @updatedAt @map("updated_at")
+  profilePictureURL String     @map("profile_picture_url")
+  author            User       @relation(fields: [userId], references: [id])
+  categories        Category[]
+
+  @@map("posts")
+}
+
+model Category {
+  id            Int    @id @default(autoincrement())
+  categoryLabel String @map("category_label")
+  posts         Post[]
+
+  @@map("categories")
+}
+
+model Role {
+  roleName        String             @id @map("role_name")
+  roleDescription String             @map("role_description")
+  users           UserToRole[]
+  permissions     RoleToPermission[]
+
+  @@map("role")
+}
+
+model Permission {
+  permissionName        String             @id @map("permission_name")
+  permissionDescription String             @map("permission_description")
+  roles                 RoleToPermission[]
+
+  @@map("permission")
+}
+
+model UserToRole {
+  user      String
+  roleId    String @map("role_id")
+  userEmail User   @relation(fields: [user], references: [email])
+  role      Role   @relation(fields: [roleId], references: [roleName])
+
+  @@id([user, roleId])
+  @@map("user_to_role")
+}
+
+model RoleToPermission {
+  roleId       String     @map("role_id")
+  permissionId String     @map("permission_id")
+  role         Role       @relation(fields: [roleId], references: [roleName])
+  permission   Permission @relation(fields: [permissionId], references: [permissionName])
+
+  @@id([roleId, permissionId])
+  @@map("role_to_permission")
+}
