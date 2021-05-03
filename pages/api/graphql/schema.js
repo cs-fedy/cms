@@ -18,6 +18,10 @@ export default gql`
     UserNOT_AUTHORIZED
   }
 
+  type AuthPayload {
+    token: String!
+  }
+  
   input SignupInput {
     fullName: String!
     email: String!
@@ -33,8 +37,11 @@ export default gql`
   type Query {
     hello: String!
   }
+
   type Mutation {
-    signup(signupInput: SignupInput): User!
-    login(loginInput: LoginInput): User!
+    signup(signupInput: SignupInput): AuthPayload!
+    login(loginInput: LoginInput): AuthPayload!
+    logout: Boolean!
+    refreshUser: AuthPayload!
   }
 `;

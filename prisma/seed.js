@@ -36,7 +36,7 @@ const roles = [
 
 const userToRole = [
   {
-    user: "fedi.abd01@gmail.com",
+    userEmail: "fedi.abd01@gmail.com",
     roleId: "ADMIN",
   },
 ];
@@ -73,7 +73,11 @@ const seedDb = async () => {
   await prisma.roleToPermission.createMany({ data: roleToPermission });
 };
 
+const rollBackDb = async () => {
+  // TODO: implement roll back db function
+}
+
 seedDb().catch((error) => {
-  console.log(error);
+  console.error(error);
   process.exit(1);
 });

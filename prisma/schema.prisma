@@ -8,28 +8,28 @@ datasource db {
 }
 
 model User {
-  id                Int          @id @default(autoincrement())
-  fullName          String       @map("full_name")
-  email             String       @unique
-  createdAt         DateTime?    @default(now()) @map("created_at")
-  updatedAt         DateTime?    @updatedAt @map("updated_at")
-  profilePictureURL String       @map("profile_picture_url")
+  email             String         @id
+  fullName          String         @map("full_name")
+  createdAt         DateTime?      @default(now()) @map("created_at")
+  updatedAt         DateTime?      @updatedAt @map("updated_at")
+  profilePictureURL String         @map("profile_picture_url")
   password          String
   posts             Post[]
   roles             UserToRole[]
+  refreshTokens     RefreshToken[]
 
   @@map("users")
 }
 
 model Post {
   id                Int        @id @default(autoincrement())
-  userId            Int        @map("user_id")
+  userEmail         String     @map("user_email")
   title             String
   content           String
   publishedAt       DateTime   @default(now()) @map("published_at")
   updatedAt         DateTime   @updatedAt @map("updated_at")
   profilePictureURL String     @map("profile_picture_url")
-  author            User       @relation(fields: [userId], references: [id])
+  author            User       @relation(fields: [userEmail], references: [email])
   categories        Category[]
 
   @@map("posts")
@@ -61,12 +61,12 @@ model Permission {
 }
 
 model UserToRole {
-  user      String
+  userEmail String
   roleId    String @map("role_id")
-  userEmail User   @relation(fields: [user], references: [email])
+  user      User   @relation(fields: [userEmail], references: [email])
   role      Role   @relation(fields: [roleId], references: [roleName])
 
-  @@id([user, roleId])
+  @@id([userEmail, roleId])
   @@map("user_to_role")
 }
 
@@ -78,4 +78,14 @@ model RoleToPermission {
 
   @@id([roleId, permissionId])
   @@map("role_to_permission")
+}
+
+model RefreshToken {
+  userEmail String
+  hash      String
+  expiry    DateTime
+  user      User     @relation(fields: [userEmail], references: [email])
+
+  @@id([userEmail, hash])
+  @@map("refresh_token")
 }
