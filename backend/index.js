@@ -1,11 +1,10 @@
 /* eslint-disable no-undef */
-const express = require("express")
-const cookieParser = require("cookie-parser")
-const { ApolloServer } = require("apollo-server-express")
+const { ApolloServer } = require("apollo-server")
 const httpHeadersPlugin = require("apollo-server-plugin-http-headers")
 const typeDefs = require("./graphql/schema")
 const resolvers = require("./graphql/resolvers")
-const refreshUserRouter = require("./routes/refreshToken")
+require("dotenv").config()
+
 
 const apolloServer = new ApolloServer({
   typeDefs,
@@ -16,19 +15,17 @@ const apolloServer = new ApolloServer({
     //* Initialized as empty arrays - resolvers will add items if required
     const setCookies = []
     const setHeaders = []
-    const refreshToken = req.headers.cookie.split("=")[1] || undefined
+    const refreshToken = req.headers.cookie?.split("=")[1]
     return { req, setCookies, setHeaders, refreshToken }
   },
 })
 
-const app = express()
-app.use(cookieParser())
-app.use("/refreshUser", refreshUserRouter)
-apolloServer.applyMiddleware({ app })
 
-app
+apolloServer
   .listen(process.env.PORT)
   .then((res) => console.log(`server is on: ${res.url}`))
   .catch((err) => {
     throw new Error(err)
   })
+
+// TODO: debug error handling

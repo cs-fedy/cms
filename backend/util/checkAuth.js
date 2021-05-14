@@ -1,7 +1,8 @@
 /* eslint-disable no-undef */
-const { AuthenticationError, UserInputError  } = require("apollo-server")
+const { AuthenticationError, UserInputError, ForbiddenError  } = require("apollo-server")
 const jwt = require("jsonwebtoken")
 const redis = require("./redis")
+const { verifyEmail } = require("./validator")
 
 module.exports = req => {
   const authHeader = req.headers.authorization
@@ -16,13 +17,18 @@ module.exports = req => {
     //* check if token is black listed or not
     redis.get(email, (err, res) => {
       if (err) throw new Error("Error while validating the JWT")
-      if (res && token in res) {
-        throw new Error("Token is black listed")
+      res = JSON.parse(res)
+      if (res && res.includes(token)) {
+        throw new ForbiddenError("Token is black listed")
       }
     })
 
-    payload = { email, exp, token}
+    payload = { email, exp, token }
   })
 
-  return payload
+  const isValidEmail = verifyEmail(email)
+  if (!isValidEmail) throw new ForbiddenError("Invalid email format")
+  
+  const { email, exp, token: payloadToken } = payload
+  return { email, exp, token: payloadToken }
 }

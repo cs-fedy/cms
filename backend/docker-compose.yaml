@@ -4,8 +4,8 @@ services:
     image: redis
     container_name: cache
     restart: unless-stopped
-    expose:
-      - 6379
+    ports:
+      - 6379:6379
 
   db:
     image: postgres
@@ -21,23 +21,50 @@ services:
       PGDATA: /var/lib/postgresql/data
     ports:
       - 5432:5432
-  
-  app:
-    build: .
-    container_name: app
-    restart: always
+    networks: 
+      - database
+
+  pgadmin:
+    image: dpage/pgadmin4
+    container_name: pgadmin
+    environment: 
+      PGADMIN_DEFAULT_EMAIL: ${PGADMIN_DEFAULT_EMAIL}
+      PGADMIN_DEFAULT_PASSWORD: ${PGADMIN_DEFAULT_PASSWORD}
     volumes:
-      - .:/home/app/:ro
-      - /home/app/node_modules/
+        - pgadmin-data:/var/lib/pgadmin
+    networks: 
+      - database
     ports:
-      - 3000:3000
-    env_file:
-      - ./.env
-    depends_on:
+      - 5050:80
+    depends_on: 
       - db
-      - redis
+    restart: unless-stopped
+    links:
+      - "db:pgsql-server"
+  
+  # app:
+  #   build: .
+  #   container_name: app
+  #   restart: always
+  #   volumes:
+  #     - .:/home/app/:ro
+  #     - /home/app/node_modules/
+  #   ports:
+  #     - 3000:3000
+  #   env_file:
+  #     - ./.env
+  #   depends_on:
+  #     - db
+  #     - redis
 
 
 volumes:
   db-data:
     driver: local
+  pgadmin-data:
+    driver: local
+  
+
+networks: 
+  database:
+    driver: bridge

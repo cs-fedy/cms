@@ -45,14 +45,18 @@ module.exports = gql`
   }
 
   type Query {
-    hello: String!
+    getUsers: [User]!
+    getUser(email: String!): User
+    getUnauthorizedUsers: [User]!
   }
 
   type Mutation {
     signup(signupInput: SignupInput): AuthPayload!
     login(loginInput: LoginInput): AuthPayload!
     logout: Boolean!
+    refreshUser: AuthPayload!
     requestReset(email: String!): RRPayload!
     resetPassword(resetPasswordInput: ResetPasswordInput): Boolean!
+    deleteUser: Boolean!
   }
 `

@@ -82,7 +82,7 @@ model RoleToPermission {
 
 model RefreshToken {
   userEmail String
-  token      String
+  token     String
   expiry    DateTime
   user      User     @relation(fields: [userEmail], references: [email])
 

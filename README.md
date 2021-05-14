@@ -12,6 +12,7 @@ I'm creating my own CMS using graphql(Apollo), postgresQL.
 4. [graphQL](https://graphql.org/): A query language for your API.
 5. [Apollo server](https://www.apollographql.com/docs/apollo-server/): Apollo Server is an open-source, spec-compliant GraphQL server that's compatible with any GraphQL client, including Apollo Client.
 6. [bcrypt](https://www.npmjs.com/package/bcrypt): A library to help you hash passwords.
+7. [Oauth](https://oauth.net/): An open protocol to allow secure authorization in a simple and standard method from web, mobile and desktop applications.
 
 ## Author:
 
