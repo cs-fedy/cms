@@ -16,23 +16,20 @@ const {
   serverSignupInputValidator,
   serverLoginInputValidator,
   resetPasswordInputValidator,
+  verifyEmail,
 } = require("../../util/validator")
 const checkAuth = require("../../util/checkAuth")
 const generateRefreshToken = require("../../util/refreshToken")
 const REFRESH_TOKEN_COOKIE_OPTIONS = require("../../util/cookiesOptions")
 const addToBlackList = require("../../util/blackList")
-const transport = require("../../util/nodeMailerTransport")
+const sendEmail = require("../../util/sendEmail")
 
 module.exports = {
   Query: {
     async getUsers(parent, args, context, info) {
       const userData = checkAuth(context.req)
       const users = await prisma.user.findMany()
-      return users.map((user) => ({
-        ...user,
-        password: "GOT YA HHHH NICE TRY",
-        token: "not specified",
-      }))
+      return users
     },
 
     async getUser(parent, args, context, info) {
@@ -40,41 +37,40 @@ module.exports = {
       const user = await prisma.user.findUnique({
         where: { email: args.email },
       })
-
-      return {
-        ...user,
-        password: "GOT YA HHHH NICE TRY",
-        token: "not specified",
-      }
+      return user
     },
 
     async getUnauthorizedUsers(parent, args, context, info) {
-      const { email } = checkAuth(context.req)
-      
-      const foundUser = await prisma.user.findUnique({
-        where: { email },
+      const { roles } = checkAuth(context.req)
+      if (!roles.includes("ADMIN"))
+        throw new ForbiddenError("You are not an ADMIN")
+      const unauthorizedUsers = await prisma.user.findMany({
+        where: {
+          roles: { some: { roleId: "NOT_AUTHORIZED" } },
+        },
       })
-      if (!foundUser) throw new ForbiddenError("Invalid user")
 
-      const userRole = await prisma.userToRole.findUnique({
-        where: { email }
-      })
-      
-      if (userRole.roleId !== "ADMIN") throw new ForbiddenError("You are not an ADMIN")
-      // TODO: get unauthorized users
-      // TODO: return users
+      return unauthorizedUsers
+    },
+
+    async getRoles(parent, args, context, info) {
+      const { roles } = checkAuth(context.req)
+      if (!roles.includes("ADMIN"))
+        throw new ForbiddenError("You are not an ADMIN")
+
+      const savedRoles = await prisma.role.findMany()
+      return savedRoles
     },
   },
 
   Mutation: {
     async signup(parent, args, context, info) {
-      const { signupInput } = args
-      const { valid, errors } = serverSignupInputValidator(signupInput)
+      const { valid, errors } = serverSignupInputValidator(args.signupInput)
       if (!valid) {
         throw new UserInputError("invalid credentials", { errors })
       }
 
-      const { email, fullName, password, profilePictureURL } = signupInput
+      const { email, fullName, password, profilePictureURL } = args.signupInput
       const isRegistered = await prisma.user.findUnique({
         where: { email },
       })
@@ -100,25 +96,39 @@ module.exports = {
         },
       })
 
+      //* give the user a default role: NOT_AUTHORIZED
+      await prisma.userToRole.create({
+        data: {
+          userEmail: email,
+          roleId: "NOT_AUTHORIZED",
+        },
+      })
+
       context.setCookies.push(await generateRefreshToken(email))
 
-      const token = await jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "15m",
-      })
+      const token = await jwt.sign(
+        { email, roles: ["NOT_AUTHORIZED"] },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      )
       return { token }
     },
 
     async login(parent, args, context, info) {
-      const { loginInput } = args
-      const { valid, errors } = serverLoginInputValidator(loginInput)
+      const { valid, errors } = serverLoginInputValidator(args.loginInput)
       if (!valid) {
         throw new UserInputError("invalid credentials", { errors })
       }
 
-      const { email, password } = loginInput
+      const { email, password } = args.loginInput
       const user = await prisma.user.findUnique({
-        where: {
-          email,
+        where: { email },
+        include: {
+          roles: {
+            select: { roleId: true },
+          },
         },
       })
       if (!user) {
@@ -134,9 +144,14 @@ module.exports = {
 
       context.setCookies.push(await generateRefreshToken(email))
 
-      const token = await jwt.sign({ email }, process.env.JWT_SECRET, {
-        expiresIn: "15m",
-      })
+      const userRoles = user.roles.map((role) => role.roleId)
+      const token = await jwt.sign(
+        { email, roles: userRoles },
+        process.env.JWT_SECRET,
+        {
+          expiresIn: "15m",
+        }
+      )
 
       return { token }
     },
@@ -180,6 +195,9 @@ module.exports = {
 
       const foundUser = await prisma.user.findUnique({
         where: { email },
+        include: {
+          roles: { select: { roleId: true } },
+        },
       })
       if (!foundUser) throw new ForbiddenError("Invalid user")
 
@@ -225,8 +243,9 @@ module.exports = {
       //* add old access token to the black list
       await addToBlackList(token, email, exp)
 
+      const userRoles = foundUser.roles.map((role) => role.roleId)
       const newToken = await jwt.sign(
-        { email: foundUser.email },
+        { email: foundUser.email, roles: userRoles },
         process.env.JWT_SECRET,
         {
           expiresIn: "15m",
@@ -253,19 +272,11 @@ module.exports = {
       await redis.set(resetPasswordCode, resetPasswordCodeExpiry)
 
       //* Sends an email to the user that has the token
-      // TODO: debug sending the email
-      try {
-        //* send mail with defined transport object
-        await transport.sendMail({
-          from: process.env.MAIL_USERNAME, // sender address
-          to: email, // list of receivers
-          subject: "cms reset password code", // Subject line
-          text: `hello ${email} this is your code ${resetPasswordCode}`, // plain text body
-        })
-        transport.close()
-      } catch (error) {
-        throw Error("Error while sending reset password code email")
-      }
+      await sendEmail(
+        email,
+        "cms reset password code",
+        `hello ${email} this is your code ${resetPasswordCode}`
+      )
 
       //* if success return code expiry date
       return { expiry: resetPasswordCodeExpiry }
@@ -322,40 +333,58 @@ module.exports = {
       return true
     },
 
-    // TODO: debug delete account
-    async deleteUser(parent, args, context, info) {
-      const { email, token, exp } = checkAuth(context.req)
+    //* - when a new account is created, it must be verified by an admin with the 'ADMIN' role
+    async giveUserRole(parent, args, context, info) {
+      const { email, roles } = checkAuth(context.req)
+      if (!roles.includes("ADMIN"))
+        throw new ForbiddenError("You are not an ADMIN")
+
+      const { userEmail: inputEmail, role: inputRole } = args.roleInput
+      const isValidEmail = verifyEmail(inputEmail)
+      if (!isValidEmail) throw new ForbiddenError("Invalid email format")
+      const isValidRole = await prisma.role.findUnique({
+        where: { roleName: inputRole },
+      })
+      if (!isValidRole) throw new UserInputError("undefined Role")
 
       const user = await prisma.user.findUnique({
-        where: { email },
+        where: { email: inputEmail },
+        include: {
+          roles: {
+            select: { roleId: true },
+          },
+        },
       })
-      if (!user) throw new UserInputError("Wrong credentials")
+      if (!user) throw new ForbiddenError("Invalid user")
 
-      const deleteUserPosts = prisma.post.deleteMany({
-        where: { userEmail: email },
-      })
-      const deleteUserRoles = prisma.post.userToRole({
-        where: { userEmail: email },
-      })
-      const deleteUserRefreshTokens = prisma.post.refreshToken({
-        where: { userEmail: email },
-      })
-      await Promise.all([deleteUserPosts, deleteUserRoles, deleteUserRefreshTokens])
-      
-      //* delete the user
-      await prisma.user.delete({
-        where: { email },
+      const userRoles = user.roles.map((role) => role.roleId)
+      if (userRoles.includes(inputRole))
+        throw new UserInputError(`User already have the role ${inputRole}`)
+
+      await prisma.userToRole.create({
+        data: {
+          userEmail: inputEmail,
+          roleId: inputRole,
+        },
       })
 
-      //* add access token to the black list
-      await addToBlackList(token, email, exp)
+      if (userRoles.includes("NOT_AUTHORIZED")) {
+        await prisma.userToRole.delete({
+          where: {
+            userEmail: inputEmail,
+            roleId: "NOT_AUTHORIZED"
+          }
+        })
+      }
 
-      //* return true if sign out is done
+      //* notify the user with his new role
+      await sendEmail(
+        inputEmail,
+        "new granted role",
+        `hello ${inputEmail} - ${email} granted you the ${inputRole} role. You can now login to the dashboard`
+      )
+
       return true
     },
-    // TODO ---------
-    //* - admin can add other users to the dashboard with the specific roles
-    //* - when a new account is created, it must be verified by an admin with the 'ADMIN' role
-    // TODO ---------
   },
 }

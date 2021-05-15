@@ -35,4 +35,17 @@ const transport = nodemailer.createTransport({
   },
 })
 
-module.exports = transport
+module.exports = async (email, subject, text) => {
+  try {
+    //* send mail with defined transport object
+    await transport.sendMail({
+      from: process.env.MAIL_USERNAME, // sender address
+      to: email, // list of receivers
+      subject, // Subject line
+      text, // plain text body
+    })
+    transport.close()
+  } catch (error) {
+    throw Error("Error while sending reset password code email")
+  }
+}

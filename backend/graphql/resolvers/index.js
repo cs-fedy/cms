@@ -1,4 +1,5 @@
 const user = require("./user")
+const customResolvers = require("./customResolvers")
 
 module.exports = {
   Query: {
@@ -7,4 +8,6 @@ module.exports = {
   Mutation: {
     ...user.Mutation,
   },
+
+  ...customResolvers
 }

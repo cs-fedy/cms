@@ -5,17 +5,15 @@ module.exports = gql`
     id: ID!
     fullName: String!
     email: String!
-    password: String!
     createdAt: String!
     updatedAt: String
     profilePictureURL: String
-    role: Role
-    token: String!
+    roles: String
   }
 
-  enum Role {
-    ADMIN
-    UserNOT_AUTHORIZED
+  type Role {
+    roleName: String!
+    roleDescription: String!
   }
 
   type AuthPayload {
@@ -44,10 +42,16 @@ module.exports = gql`
     resetCode: String!
   }
 
+  input RoleInput {
+    userEmail: String!
+    role: String!
+  }
+
   type Query {
     getUsers: [User]!
     getUser(email: String!): User
     getUnauthorizedUsers: [User]!
+    getRoles: [Role]!
   }
 
   type Mutation {
@@ -57,6 +61,6 @@ module.exports = gql`
     refreshUser: AuthPayload!
     requestReset(email: String!): RRPayload!
     resetPassword(resetPasswordInput: ResetPasswordInput): Boolean!
-    deleteUser: Boolean!
+    giveUserRole(roleInput: RoleInput!): Boolean!
   }
 `
