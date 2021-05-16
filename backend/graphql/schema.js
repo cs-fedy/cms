@@ -2,9 +2,8 @@ const gql = require("graphql-tag")
 
 module.exports = gql`
   type User {
-    id: ID!
     fullName: String!
-    email: String!
+    email: ID!
     createdAt: String!
     updatedAt: String
     profilePictureURL: String
@@ -14,6 +13,16 @@ module.exports = gql`
   type Role {
     roleName: String!
     roleDescription: String!
+  }
+
+  type Post {
+    id: ID!
+    userEmail: String!
+    title: String!
+    content: String!
+    publishedAt: String!
+    updatedAt: String
+    categories: [String]!
   }
 
   type AuthPayload {
@@ -26,32 +35,47 @@ module.exports = gql`
 
   input SignupInput {
     fullName: String!
-    email: String!
+    email: ID!
     password: String!
     profilePictureURL: String
   }
 
   input LoginInput {
-    email: String!
+    email: ID!
     password: String!
   }
 
   input ResetPasswordInput {
-    email: String!
+    email: ID!
     password: String!
     resetCode: String!
   }
 
   input RoleInput {
-    userEmail: String!
+    userEmail: ID!
     role: String!
+  }
+
+  input CreatePostInput {
+    title: String!
+    content: String!
+    categories: [String]!
+  }
+
+  input UpdatePostInput {
+    id: ID!
+    title: String
+    content: String
+    categories: [String]
   }
 
   type Query {
     getUsers: [User]!
-    getUser(email: String!): User
+    getUser(email: ID!): User!
     getUnauthorizedUsers: [User]!
     getRoles: [Role]!
+    getPost(id: ID!): Post!
+    getPosts: [Post]!
   }
 
   type Mutation {
@@ -59,8 +83,11 @@ module.exports = gql`
     login(loginInput: LoginInput): AuthPayload!
     logout: Boolean!
     refreshUser: AuthPayload!
-    requestReset(email: String!): RRPayload!
+    requestReset(email: ID!): RRPayload!
     resetPassword(resetPasswordInput: ResetPasswordInput): Boolean!
     giveUserRole(roleInput: RoleInput!): Boolean!
+    createPost(createPostInput: CreatePostInput!): Post!
+    updatePost(updatePostInput: UpdatePostInput!): Post!
+    deletePost(postId: ID!): Boolean!
   }
 `

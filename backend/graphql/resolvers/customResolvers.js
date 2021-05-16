@@ -11,4 +11,18 @@ module.exports = {
       return roles.map(role => role.roleId)
     },
   },
+
+  Post: {
+    categories: async (parent) => {
+      const post = await prisma.post.findUnique({
+        where: { id: parent.id },
+        include: {
+          categories: {
+            select: { categoryId: true }
+          }
+        }
+      })
+      return post.categories.map(category => category.categoryId)
+    }
+  }
 }

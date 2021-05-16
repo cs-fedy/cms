@@ -59,9 +59,28 @@ const resetPasswordInputValidator = ({ email, password, resetCode }) => {
   }
 }
 
+const verifyCreatePostArgs = args => {
+  const { title, content } = args
+  const errors = {}
+
+  if (!title) {
+    errors.title = "title field is required"
+  }
+
+  if (!content) {
+    errors.content = "content field is required"
+  }
+
+  return {
+    errors,
+    valid: Object.keys(errors).length < 1,
+  }
+}
+
 module.exports = {
   serverSignupInputValidator,
   serverLoginInputValidator,
   resetPasswordInputValidator,
+  verifyCreatePostArgs,
   verifyEmail,
 }

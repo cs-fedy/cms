@@ -22,25 +22,33 @@ model User {
 }
 
 model Post {
-  id                Int        @id @default(autoincrement())
-  userEmail         String     @map("user_email")
-  title             String
-  content           String
-  publishedAt       DateTime   @default(now()) @map("published_at")
-  updatedAt         DateTime   @updatedAt @map("updated_at")
-  profilePictureURL String     @map("profile_picture_url")
-  author            User       @relation(fields: [userEmail], references: [email])
-  categories        Category[]
+  id          Int              @id @default(autoincrement())
+  userEmail   String           @map("user_email")
+  title       String
+  content     String
+  publishedAt DateTime         @default(now()) @map("published_at")
+  updatedAt   DateTime         @updatedAt @map("updated_at")
+  author      User             @relation(fields: [userEmail], references: [email])
+  categories  PostToCategory[]
 
   @@map("posts")
 }
 
 model Category {
-  id            Int    @id @default(autoincrement())
-  categoryLabel String @map("category_label")
-  posts         Post[]
+  categoryLabel String           @id @map("category_label")
+  posts         PostToCategory[]
 
   @@map("categories")
+}
+
+model PostToCategory {
+  postId     Int      @map("post_id")
+  categoryId String   @map("category_id")
+  post       Post     @relation(fields: [postId], references: [id])
+  category   Category @relation(fields: [categoryId], references: [categoryLabel])
+
+  @@id([postId, categoryId])
+  @@map("post_to_category")
 }
 
 model Role {
