@@ -1,22 +1,5 @@
 const { PrismaClient } = require("@prisma/client")
 
-const permissions = [
-  {
-    permissionName: "MANAGE_USER",
-    permissionDescription:
-      "who have this permission can manage users to the dashboard",
-  },
-  {
-    permissionName: "MANAGE_BLOG",
-    permissionDescription:
-      "who have this permission can get, update, delete and create a blog",
-  },
-  {
-    permissionName: "MANAGE_CATEGORY",
-    permissionDescription: "who have this permission can manage categories",
-  },
-]
-
 const roles = [
   {
     roleName: "ADMIN",
@@ -41,36 +24,11 @@ const userToRole = [
   },
 ]
 
-const roleToPermission = [
-  {
-    roleId: "ADMIN",
-    permissionId: "MANAGE_USER",
-  },
-  {
-    roleId: "ADMIN",
-    permissionId: "MANAGE_BLOG",
-  },
-  {
-    roleId: "ADMIN",
-    permissionId: "MANAGE_CATEGORY",
-  },
-  {
-    roleId: "USER",
-    permissionId: "MANAGE_BLOG",
-  },
-  {
-    roleId: "USER",
-    permissionId: "MANAGE_CATEGORY",
-  },
-]
-
 //* seeding the db
 const prisma = new PrismaClient()
 const seedDb = async () => {
-  await prisma.permission.createMany({ data: permissions })
   await prisma.role.createMany({ data: roles })
   await prisma.userToRole.createMany({ data: userToRole })
-  await prisma.roleToPermission.createMany({ data: roleToPermission })
 }
 
 // eslint-disable-next-line no-unused-vars

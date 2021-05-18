@@ -25,6 +25,11 @@ module.exports = gql`
     categories: [String]!
   }
 
+  type Cat {
+    categoryLabel: ID!
+    categoryDescription: String!
+  }
+
   type AuthPayload {
     token: String!
   }
@@ -69,6 +74,11 @@ module.exports = gql`
     categories: [String]
   }
 
+  input CatInput {
+    categoryLabel: ID!
+    categoryDescription: String!
+  }
+
   type Query {
     getUsers: [User]!
     getUser(email: ID!): User!
@@ -76,6 +86,7 @@ module.exports = gql`
     getRoles: [Role]!
     getPost(id: ID!): Post!
     getPosts: [Post]!
+    getCats: [Cat]!
   }
 
   type Mutation {
@@ -89,5 +100,8 @@ module.exports = gql`
     createPost(createPostInput: CreatePostInput!): Post!
     updatePost(updatePostInput: UpdatePostInput!): Post!
     deletePost(postId: ID!): Boolean!
+    createCat(catInput: CatInput): Cat!
+    updateCat(catInput: CatInput): Cat!
+    deleteCat(catId: ID!): Boolean!
   }
 `

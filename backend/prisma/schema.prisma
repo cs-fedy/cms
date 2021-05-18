@@ -35,8 +35,9 @@ model Post {
 }
 
 model Category {
-  categoryLabel String           @id @map("category_label")
-  posts         PostToCategory[]
+  categoryLabel       String           @id @map("category_label")
+  categoryDescription String
+  posts               PostToCategory[]
 
   @@map("categories")
 }
@@ -52,20 +53,11 @@ model PostToCategory {
 }
 
 model Role {
-  roleName        String             @id @map("role_name")
-  roleDescription String             @map("role_description")
+  roleName        String       @id @map("role_name")
+  roleDescription String       @map("role_description")
   users           UserToRole[]
-  permissions     RoleToPermission[]
 
   @@map("role")
-}
-
-model Permission {
-  permissionName        String             @id @map("permission_name")
-  permissionDescription String             @map("permission_description")
-  roles                 RoleToPermission[]
-
-  @@map("permission")
 }
 
 model UserToRole {
@@ -76,16 +68,6 @@ model UserToRole {
 
   @@id([userEmail, roleId])
   @@map("user_to_role")
-}
-
-model RoleToPermission {
-  roleId       String     @map("role_id")
-  permissionId String     @map("permission_id")
-  role         Role       @relation(fields: [roleId], references: [roleName])
-  permission   Permission @relation(fields: [permissionId], references: [permissionName])
-
-  @@id([roleId, permissionId])
-  @@map("role_to_permission")
 }
 
 model RefreshToken {
