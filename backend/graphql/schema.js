@@ -79,6 +79,12 @@ module.exports = gql`
     categoryDescription: String!
   }
 
+  input UpdateCatInput {
+    categoryId: ID!
+    newCategoryLabel: ID
+    newCategoryDescription: String
+  }
+
   type Query {
     getUsers: [User]!
     getUser(email: ID!): User!
@@ -100,8 +106,8 @@ module.exports = gql`
     createPost(createPostInput: CreatePostInput!): Post!
     updatePost(updatePostInput: UpdatePostInput!): Post!
     deletePost(postId: ID!): Boolean!
-    createCat(catInput: CatInput): Cat!
-    updateCat(catInput: CatInput): Cat!
+    createCat(catInput: CatInput!): Cat!
+    updateCat(updateCatInput: UpdateCatInput!): Cat!
     deleteCat(catId: ID!): Boolean!
   }
 `

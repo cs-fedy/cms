@@ -2,7 +2,6 @@
 /* eslint-disable no-unused-vars */
 const { ForbiddenError, UserInputError } = require("apollo-server")
 const post = require("../../db/post")
-const user = require("../../db/user")
 const category = require("../../db/category")
 const checkAuth = require("../../util/checkAuth")
 const { verifyCreatePostArgs } = require("../../util/validator")
@@ -49,7 +48,6 @@ module.exports = {
       const {
         title,
         content,
-        categories: inputCategories,
       } = args.createPostInput
       const foundPost = await post.createPost({
         userEmail: email,
@@ -57,7 +55,7 @@ module.exports = {
         content,
       })
 
-      inputCategories.map(async (cat) => await post.addCategoryToPost(args.id, cat))
+      categories.map(async (cat) => await post.addCategoryToPost(args.id, cat.id))
 
       return foundPost
     },
@@ -66,9 +64,6 @@ module.exports = {
       const { roles, email } = checkAuth(context.req)
       if (roles.includes("NOT_AUTHORIZED"))
         throw new ForbiddenError("You are not authorized to update a post")
-
-      const foundUser = await user.getUser(email)
-      if (!foundUser) throw new UserInputError("Wrong user")
 
       const foundPost = await post.getPost(args.updatePostInput.id)
       if (!foundPost) throw new UserInputError("invalid post id")
@@ -90,7 +85,7 @@ module.exports = {
         await category.removeCategoriesFromPost(id)
 
         for (let category of cats) {
-          await category.addCategoryToPost(id, category.categoryLabel)
+          await category.addCategoryToPost(id, category.id)
         }
       }
 
@@ -100,12 +95,9 @@ module.exports = {
     },
 
     async deletePost(parent, args, context, info) {
-      const { roles, email } = checkAuth(context.req)
+      const { roles } = checkAuth(context.req)
       if (roles.includes("NOT_AUTHORIZED"))
         throw new ForbiddenError("You are not authorized to update a post")
-
-      const foundUser = await user.getUser(email)
-      if (!foundUser) throw new UserInputError("Wrong user")
 
       const foundPost = await post.getPost(args.postId)
       if (!foundPost) throw new UserInputError("invalid post id")

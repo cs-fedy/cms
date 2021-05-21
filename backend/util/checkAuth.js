@@ -27,7 +27,7 @@ module.exports = req => {
   })
 
   const isValidEmail = verifyEmail(payload.email)
-  if (!isValidEmail) throw new ForbiddenError("Invalid email format")
+  if (isValidEmail != null) throw new ForbiddenError("Invalid email format")
   
   const { email, exp, token: payloadToken, roles } = payload
   return { email, exp, token: payloadToken, roles }
