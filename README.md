@@ -17,6 +17,6 @@ I'm creating my own CMS using graphql(Apollo), postgresQL.
 ## Author:
 
 **created at 🌙 with 💻 and ❤ by me fedy abdouli**
-* **Fedi abdouli** - **iShare - twitter clone** - [fedi abdouli](https://github.com/cs-fedy)
+* **Fedi abdouli** - **cms** - [fedi abdouli](https://github.com/cs-fedy)
 * my twitter account [FediAbdouli](https://www.twitter.com/FediAbdouli)
 * my instagram account [f0odyy](https://www.instagram.com/f0odyy)
